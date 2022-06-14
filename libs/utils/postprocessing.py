@@ -1,4 +1,9 @@
 import os
+import sys
+
+# add python path of PadleDetection to sys.path
+parent_path = os.path.abspath(os.path.join(__file__, *(['..'] * 3)))
+sys.path.insert(0, parent_path)
 import shutil
 import time
 import json
@@ -19,6 +24,7 @@ def load_results_from_pkl(filename):
         results = pickle.load(f)
     return results
 
+
 def load_results_from_json(filename):
     assert os.path.isfile(filename)
     with open(filename, "r") as f:
@@ -27,6 +33,7 @@ def load_results_from_json(filename):
     if 'results' in results:
         results = results['results']
     return results
+
 
 def results_to_dict(results):
     """convert result arrays into dict used by json files"""
@@ -38,16 +45,16 @@ def results_to_dict(results):
 
     # fill in the dict
     for vidx, start, end, label, score in zip(
-        results['video-id'],
-        results['t-start'],
-        results['t-end'],
-        results['label'],
-        results['score']
+            results['video-id'],
+            results['t-start'],
+            results['t-end'],
+            results['label'],
+            results['score']
     ):
         results_dict[vidx].append(
             {
-                "label" : int(label),
-                "score" : float(score),
+                "label": int(label),
+                "score": float(score),
                 "segment": [float(start), float(end)],
             }
         )
@@ -60,18 +67,18 @@ def results_to_array(results, num_pred):
     results_dict = {}
     for vidx in vidxs:
         results_dict[vidx] = {
-            'label'   : [],
-            'score'   : [],
-            'segment' : [],
+            'label': [],
+            'score': [],
+            'segment': [],
         }
 
     # fill in the dict
     for vidx, start, end, label, score in zip(
-        results['video-id'],
-        results['t-start'],
-        results['t-end'],
-        results['label'],
-        results['score']
+            results['video-id'],
+            results['t-start'],
+            results['t-end'],
+            results['label'],
+            results['score']
     ):
         results_dict[vidx]['label'].append(int(label))
         results_dict[vidx]['score'].append(float(score))
@@ -95,7 +102,6 @@ def results_to_array(results, num_pred):
 
 
 def postprocess_results(results, cls_score_file, num_pred=200, topk=2):
-
     # load results and convert to dict
     if isinstance(results, str):
         results = load_results_from_pkl(results)
@@ -111,7 +117,7 @@ def postprocess_results(results, cls_score_file, num_pred=200, topk=2):
     # dict for processed results
     processed_results = {
         'video-id': [],
-        't-start' : [],
+        't-start': [],
         't-end': [],
         'label': [],
         'score': []
@@ -137,7 +143,7 @@ def postprocess_results(results, cls_score_file, num_pred=200, topk=2):
         new_pred_label = np.tile(topk_cls_idx[:, None], (1, num_segs)).flatten()
 
         # add to result
-        processed_results['video-id'].extend([vid]*num_segs*topk)
+        processed_results['video-id'].extend([vid] * num_segs * topk)
         processed_results['t-start'].append(new_pred_segment[:, 0])
         processed_results['t-end'].append(new_pred_segment[:, 1])
         processed_results['label'].append(new_pred_label)
@@ -148,7 +154,7 @@ def postprocess_results(results, cls_score_file, num_pred=200, topk=2):
     processed_results['t-end'] = np.concatenate(
         processed_results['t-end'], axis=0)
     processed_results['label'] = np.concatenate(
-        processed_results['label'],axis=0)
+        processed_results['label'], axis=0)
     processed_results['score'] = np.concatenate(
         processed_results['score'], axis=0)
 
