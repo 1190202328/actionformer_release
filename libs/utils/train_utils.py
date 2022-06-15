@@ -71,7 +71,7 @@ def make_optimizer(model, optimizer_config):
     # loop over all modules / params
     for mn, m in model.named_modules():
         for pn, p in m.named_parameters():
-            fpn = '%s.%s' % (mn, pn) if mn else pn # full param name
+            fpn = '%s.%s' % (mn, pn) if mn else pn  # full param name
             if pn.endswith('bias'):
                 # all biases will not be decayed
                 no_decay.add(fpn)
@@ -92,10 +92,10 @@ def make_optimizer(model, optimizer_config):
     param_dict = {pn: p for pn, p in model.named_parameters()}
     inter_params = decay & no_decay
     union_params = decay | no_decay
-    assert len(inter_params) == 0, "parameters %s made it into both decay/no_decay sets!" % (str(inter_params), )
+    assert len(inter_params) == 0, "parameters %s made it into both decay/no_decay sets!" % (str(inter_params),)
     assert len(param_dict.keys() - union_params) == 0, \
         "parameters %s were not separated into either decay/no_decay set!" \
-        % (str(param_dict.keys() - union_params), )
+        % (str(param_dict.keys() - union_params),)
 
     # create the pytorch optimizer object
     optim_groups = [
@@ -121,10 +121,10 @@ def make_optimizer(model, optimizer_config):
 
 
 def make_scheduler(
-    optimizer,
-    optimizer_config,
-    num_iters_per_epoch,
-    last_epoch=-1
+        optimizer,
+        optimizer_config,
+        num_iters_per_epoch,
+        last_epoch=-1
 ):
     """create scheduler
     return a supported scheduler
@@ -193,6 +193,7 @@ class AverageMeter(object):
     """Computes and stores the average and current value.
     Used to compute dataset stats from mini-batches
     """
+
     def __init__(self):
         self.initialized = False
         self.val = None
@@ -247,15 +248,15 @@ class ModelEma(torch.nn.Module):
 
 ################################################################################
 def train_one_epoch(
-    train_loader,
-    model,
-    optimizer,
-    scheduler,
-    curr_epoch,
-    model_ema = None,
-    clip_grad_l2norm = -1,
-    tb_writer = None,
-    print_freq = 20
+        train_loader,
+        model,
+        optimizer,
+        scheduler,
+        curr_epoch,
+        model_ema=None,
+        clip_grad_l2norm=-1,
+        tb_writer=None,
+        print_freq=20
 ):
     """Training the model for one epoch"""
     # set up meters
@@ -344,7 +345,7 @@ def train_one_epoch(
             block4 = ''
             for key, value in losses_tracker.items():
                 if key != "final_loss":
-                    block4  += '\t{:s} {:.2f} ({:.2f})'.format(
+                    block4 += '\t{:s} {:.2f} ({:.2f})'.format(
                         key, value.val, value.avg
                     )
 
@@ -357,14 +358,14 @@ def train_one_epoch(
 
 
 def valid_one_epoch(
-    val_loader,
-    model,
-    curr_epoch,
-    ext_score_file = None,
-    evaluator = None,
-    output_file = None,
-    tb_writer = None,
-    print_freq = 20
+        val_loader,
+        model,
+        curr_epoch,
+        ext_score_file=None,
+        evaluator=None,
+        output_file=None,
+        tb_writer=None,
+        print_freq=20
 ):
     """Test the model on the validation set"""
     # either evaluate the results or save the results
@@ -377,10 +378,11 @@ def valid_one_epoch(
     # dict for results (for our evaluation code)
     results = {
         'video-id': [],
-        't-start' : [],
+        't-start': [],
         't-end': [],
         'label': [],
-        'score': []
+        'score': [],
+        'point': []
     }
 
     # loop over validation set
@@ -402,6 +404,7 @@ def valid_one_epoch(
                     results['t-end'].append(output[vid_idx]['segments'][:, 1])
                     results['label'].append(output[vid_idx]['labels'])
                     results['score'].append(output[vid_idx]['scores'])
+                    results['point'].append(output[vid_idx]['points'])
 
         # printing
         if (iter_idx != 0) and iter_idx % (print_freq) == 0:
@@ -413,13 +416,14 @@ def valid_one_epoch(
             # print timing
             print('Test: [{0:05d}/{1:05d}]\t'
                   'Time {batch_time.val:.2f} ({batch_time.avg:.2f})'.format(
-                  iter_idx, len(val_loader), batch_time=batch_time))
+                iter_idx, len(val_loader), batch_time=batch_time))
 
     # gather all stats and evaluate
     results['t-start'] = torch.cat(results['t-start']).numpy()
     results['t-end'] = torch.cat(results['t-end']).numpy()
     results['label'] = torch.cat(results['label']).numpy()
     results['score'] = torch.cat(results['score']).numpy()
+    results['point'] = torch.cat(results['point']).numpy()
 
     if evaluator is not None:
         if (ext_score_file is not None) and isinstance(ext_score_file, str):

@@ -70,33 +70,38 @@ def results_to_array(results, num_pred):
             'label': [],
             'score': [],
             'segment': [],
+            'point': []
         }
 
     # fill in the dict
-    for vidx, start, end, label, score in zip(
+    for vidx, start, end, label, score, point in zip(
             results['video-id'],
             results['t-start'],
             results['t-end'],
             results['label'],
-            results['score']
+            results['score'],
+            results['point']
     ):
         results_dict[vidx]['label'].append(int(label))
         results_dict[vidx]['score'].append(float(score))
         results_dict[vidx]['segment'].append(
             [float(start), float(end)]
         )
+        results_dict[vidx]['point'].append([float(point[0]), int(point[1]), float(point[2])])
 
     for vidx in vidxs:
         label = np.asarray(results_dict[vidx]['label'])
         score = np.asarray(results_dict[vidx]['score'])
         segment = np.asarray(results_dict[vidx]['segment'])
+        point = np.asarray(results_dict[vidx]['point'])
 
         # the score should be already sorted, just for safety
         inds = np.argsort(score)[::-1][:num_pred]
-        label, score, segment = label[inds], score[inds], segment[inds]
+        label, score, segment, point = label[inds], score[inds], segment[inds], point[inds]
         results_dict[vidx]['label'] = label
         results_dict[vidx]['score'] = score
         results_dict[vidx]['segment'] = segment
+        results_dict[vidx]['point'] = point
 
     return results_dict
 
