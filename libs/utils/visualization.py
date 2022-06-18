@@ -16,7 +16,7 @@ from skimage.transform import resize
 to_visualize_name = {
     'video_test_0000006': [19, 18.8, 57.3, 'VolleyballSpiking', 564, 1719],  # 类别id，开始秒数，结束秒数，类别名称，开始帧，结束帧
     'video_test_0000011': [15, 0.4, 12.4, 'Shotput', 12, 372],
-    'video_test_0000058': [3, 1.9, 26.6, 'ThrowDiscus', 57, 798],
+    'video_test_0000058': [3, 1.9, 26.6, 'CleanAndJerk', 57, 798],
     'video_test_0000113': [9, 60.8, 79, 'GolfSwing', 1824, 2370],
 }
 
