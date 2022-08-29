@@ -1,9 +1,4 @@
 import os
-import sys
-
-# add python path of PadleDetection to sys.path
-parent_path = os.path.abspath(os.path.join(__file__, *(['..'] * 3)))
-sys.path.insert(0, parent_path)
 import shutil
 import time
 import json
@@ -70,38 +65,33 @@ def results_to_array(results, num_pred):
             'label': [],
             'score': [],
             'segment': [],
-            'point': []
         }
 
     # fill in the dict
-    for vidx, start, end, label, score, point in zip(
+    for vidx, start, end, label, score in zip(
             results['video-id'],
             results['t-start'],
             results['t-end'],
             results['label'],
-            results['score'],
-            results['point']
+            results['score']
     ):
         results_dict[vidx]['label'].append(int(label))
         results_dict[vidx]['score'].append(float(score))
         results_dict[vidx]['segment'].append(
             [float(start), float(end)]
         )
-        results_dict[vidx]['point'].append([float(point[0]), int(point[1]), float(point[2])])
 
     for vidx in vidxs:
         label = np.asarray(results_dict[vidx]['label'])
         score = np.asarray(results_dict[vidx]['score'])
         segment = np.asarray(results_dict[vidx]['segment'])
-        point = np.asarray(results_dict[vidx]['point'])
 
         # the score should be already sorted, just for safety
         inds = np.argsort(score)[::-1][:num_pred]
-        label, score, segment, point = label[inds], score[inds], segment[inds], point[inds]
+        label, score, segment = label[inds], score[inds], segment[inds]
         results_dict[vidx]['label'] = label
         results_dict[vidx]['score'] = score
         results_dict[vidx]['segment'] = segment
-        results_dict[vidx]['point'] = point
 
     return results_dict
 
