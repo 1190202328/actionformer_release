@@ -15,18 +15,17 @@ class PtTransformerClsHead(nn.Module):
     """
     1D Conv heads for classification
     """
-
     def __init__(
-            self,
-            input_dim,
-            feat_dim,
-            num_classes,
-            prior_prob=0.01,
-            num_layers=3,
-            kernel_size=3,
-            act_layer=nn.ReLU,
-            with_ln=False,
-            empty_cls=[]
+        self,
+        input_dim,
+        feat_dim,
+        num_classes,
+        prior_prob=0.01,
+        num_layers=3,
+        kernel_size=3,
+        act_layer=nn.ReLU,
+        with_ln=False,
+        empty_cls = []
     ):
         super().__init__()
         self.act = act_layer()
@@ -34,7 +33,7 @@ class PtTransformerClsHead(nn.Module):
         # build the head
         self.head = nn.ModuleList()
         self.norm = nn.ModuleList()
-        for idx in range(num_layers - 1):
+        for idx in range(num_layers-1):
             if idx == 0:
                 in_dim = input_dim
                 out_dim = feat_dim
@@ -45,7 +44,7 @@ class PtTransformerClsHead(nn.Module):
                 MaskedConv1D(
                     in_dim, out_dim, kernel_size,
                     stride=1,
-                    padding=kernel_size // 2,
+                    padding=kernel_size//2,
                     bias=(not with_ln)
                 )
             )
@@ -58,9 +57,9 @@ class PtTransformerClsHead(nn.Module):
 
         # classifier
         self.cls_head = MaskedConv1D(
-            feat_dim, num_classes, kernel_size,
-            stride=1, padding=kernel_size // 2
-        )
+                feat_dim, num_classes, kernel_size,
+                stride=1, padding=kernel_size//2
+            )
 
         # use prior in model initialization to improve stability
         # this will overwrite other weight init
@@ -86,7 +85,7 @@ class PtTransformerClsHead(nn.Module):
                 cur_out, _ = self.head[idx](cur_out, cur_mask)
                 cur_out = self.act(self.norm[idx](cur_out))
             cur_logits, _ = self.cls_head(cur_out, cur_mask)
-            out_logits += (cur_logits,)
+            out_logits += (cur_logits, )
 
         # fpn_masks remains the same
         return out_logits
@@ -97,16 +96,15 @@ class PtTransformerRegHead(nn.Module):
     Shared 1D Conv heads for regression
     Simlar logic as PtTransformerClsHead with separated implementation for clarity
     """
-
     def __init__(
-            self,
-            input_dim,
-            feat_dim,
-            fpn_levels,
-            num_layers=3,
-            kernel_size=3,
-            act_layer=nn.ReLU,
-            with_ln=False
+        self,
+        input_dim,
+        feat_dim,
+        fpn_levels,
+        num_layers=3,
+        kernel_size=3,
+        act_layer=nn.ReLU,
+        with_ln=False
     ):
         super().__init__()
         self.fpn_levels = fpn_levels
@@ -115,7 +113,7 @@ class PtTransformerRegHead(nn.Module):
         # build the conv head
         self.head = nn.ModuleList()
         self.norm = nn.ModuleList()
-        for idx in range(num_layers - 1):
+        for idx in range(num_layers-1):
             if idx == 0:
                 in_dim = input_dim
                 out_dim = feat_dim
@@ -126,7 +124,7 @@ class PtTransformerRegHead(nn.Module):
                 MaskedConv1D(
                     in_dim, out_dim, kernel_size,
                     stride=1,
-                    padding=kernel_size // 2,
+                    padding=kernel_size//2,
                     bias=(not with_ln)
                 )
             )
@@ -143,9 +141,9 @@ class PtTransformerRegHead(nn.Module):
 
         # segment regression
         self.offset_head = MaskedConv1D(
-            feat_dim, 2, kernel_size,
-            stride=1, padding=kernel_size // 2
-        )
+                feat_dim, 2, kernel_size,
+                stride=1, padding=kernel_size//2
+            )
 
     def forward(self, fpn_feats, fpn_masks):
         assert len(fpn_feats) == len(fpn_masks)
@@ -159,7 +157,7 @@ class PtTransformerRegHead(nn.Module):
                 cur_out, _ = self.head[idx](cur_out, cur_mask)
                 cur_out = self.act(self.norm[idx](cur_out))
             cur_offsets, _ = self.offset_head(cur_out, cur_mask)
-            out_offsets += (F.relu(self.scale[l](cur_offsets)),)
+            out_offsets += (F.relu(self.scale[l](cur_offsets)), )
 
         # fpn_masks remains the same
         return out_offsets
@@ -170,37 +168,39 @@ class PtTransformer(nn.Module):
     """
         Transformer based model for single stage action localization
     """
-
     def __init__(
-            self,
-            backbone_type,  # a string defines which backbone we use
-            fpn_type,  # a string defines which fpn we use
-            backbone_arch,  # a tuple defines # layers in embed / stem / branch
-            scale_factor,  # scale factor between branch layers
-            input_dim,  # input feat dim
-            max_seq_len,  # max sequence length (used for training)
-            max_buffer_len_factor,  # max buffer size (defined a factor of max_seq_len)
-            n_head,  # number of heads for self-attention in transformer
-            n_mha_win_size,  # window size for self attention; -1 to use full seq
-            embd_kernel_size,  # kernel size of the embedding network
-            embd_dim,  # output feat channel of the embedding network
-            embd_with_ln,  # attach layernorm to embedding network
-            fpn_dim,  # feature dim on FPN
-            fpn_with_ln,  # if to apply layer norm at the end of fpn
-            head_dim,  # feature dim for head
-            regression_range,  # regression range on each level of FPN
-            head_num_layers,  # number of layers in the head (including the classifier)
-            head_kernel_size,  # kernel size for reg/cls heads
-            head_with_ln,  # attache layernorm to reg/cls heads
-            use_abs_pe,  # if to use abs position encoding
-            use_rel_pe,  # if to use rel position encoding
-            num_classes,  # number of action classes
-            train_cfg,  # other cfg for training
-            test_cfg  # other cfg for testing
+        self,
+        backbone_type,         # a string defines which backbone we use
+        fpn_type,              # a string defines which fpn we use
+        backbone_arch,         # a tuple defines # layers in embed / stem / branch
+        scale_factor,          # scale factor between branch layers
+        input_dim,             # input feat dim
+        max_seq_len,           # max sequence length (used for training)
+        max_buffer_len_factor, # max buffer size (defined a factor of max_seq_len)
+        n_head,                # number of heads for self-attention in transformer
+        n_mha_win_size,        # window size for self attention; -1 to use full seq
+        embd_kernel_size,      # kernel size of the embedding network
+        embd_dim,              # output feat channel of the embedding network
+        embd_with_ln,          # attach layernorm to embedding network
+        fpn_dim,               # feature dim on FPN
+        fpn_with_ln,           # if to apply layer norm at the end of fpn
+        fpn_start_level,       # start level of fpn
+        head_dim,              # feature dim for head
+        regression_range,      # regression range on each level of FPN
+        head_num_layers,       # number of layers in the head (including the classifier)
+        head_kernel_size,      # kernel size for reg/cls heads
+        head_with_ln,          # attache layernorm to reg/cls heads
+        use_abs_pe,            # if to use abs position encoding
+        use_rel_pe,            # if to use rel position encoding
+        num_classes,           # number of action classes
+        train_cfg,             # other cfg for training
+        test_cfg               # other cfg for testing
     ):
         super().__init__()
         # re-distribute params to backbone / neck / head
-        self.fpn_strides = [scale_factor ** i for i in range(backbone_arch[-1] + 1)]
+        self.fpn_strides = [scale_factor**i for i in range(
+            fpn_start_level, backbone_arch[-1]+1
+        )]
         self.reg_range = regression_range
         assert len(self.fpn_strides) == len(self.reg_range)
         self.scale_factor = scale_factor
@@ -211,9 +211,9 @@ class PtTransformer(nn.Module):
         # check the feature pyramid and local attention window size
         self.max_seq_len = max_seq_len
         if isinstance(n_mha_win_size, int):
-            self.mha_win_size = [n_mha_win_size] * len(self.fpn_strides)
+            self.mha_win_size = [n_mha_win_size]*(1 + backbone_arch[-1])
         else:
-            assert len(n_mha_win_size) == len(self.fpn_strides)
+            assert len(n_mha_win_size) == (1 + backbone_arch[-1])
             self.mha_win_size = n_mha_win_size
         max_div_factor = 1
         for l, (s, w) in enumerate(zip(self.fpn_strides, self.mha_win_size)):
@@ -253,20 +253,20 @@ class PtTransformer(nn.Module):
             self.backbone = make_backbone(
                 'convTransformer',
                 **{
-                    'n_in': input_dim,
-                    'n_embd': embd_dim,
+                    'n_in' : input_dim,
+                    'n_embd' : embd_dim,
                     'n_head': n_head,
                     'n_embd_ks': embd_kernel_size,
                     'max_len': max_seq_len,
-                    'arch': backbone_arch,
+                    'arch' : backbone_arch,
                     'mha_win_size': self.mha_win_size,
-                    'scale_factor': scale_factor,
-                    'with_ln': embd_with_ln,
-                    'attn_pdrop': 0.0,
-                    'proj_pdrop': self.train_dropout,
-                    'path_pdrop': self.train_droppath,
-                    'use_abs_pe': use_abs_pe,
-                    'use_rel_pe': use_rel_pe
+                    'scale_factor' : scale_factor,
+                    'with_ln' : embd_with_ln,
+                    'attn_pdrop' : 0.0,
+                    'proj_pdrop' : self.train_dropout,
+                    'path_pdrop' : self.train_droppath,
+                    'use_abs_pe' : use_abs_pe,
+                    'use_rel_pe' : use_rel_pe
                 }
             )
         else:
@@ -278,7 +278,7 @@ class PtTransformer(nn.Module):
                     'n_embd_ks': embd_kernel_size,
                     'arch': backbone_arch,
                     'scale_factor': scale_factor,
-                    'with_ln': embd_with_ln
+                    'with_ln' : embd_with_ln
                 }
             )
 
@@ -287,10 +287,11 @@ class PtTransformer(nn.Module):
         self.neck = make_neck(
             fpn_type,
             **{
-                'in_channels': [embd_dim] * (backbone_arch[-1] + 1),
-                'out_channel': fpn_dim,
-                'scale_factor': scale_factor,
-                'with_ln': fpn_with_ln
+                'in_channels' : [embd_dim] * (backbone_arch[-1] + 1),
+                'out_channel' : fpn_dim,
+                'scale_factor' : scale_factor,
+                'start_level' : fpn_start_level,
+                'with_ln' : fpn_with_ln
             }
         )
 
@@ -298,10 +299,9 @@ class PtTransformer(nn.Module):
         self.point_generator = make_generator(
             'point',
             **{
-                'max_seq_len': max_seq_len * max_buffer_len_factor,
-                'fpn_levels': len(self.fpn_strides),
-                'scale_factor': scale_factor,
-                'regression_range': self.reg_range
+                'max_seq_len' : max_seq_len * max_buffer_len_factor,
+                'fpn_strides' : self.fpn_strides,
+                'regression_range' : self.reg_range
             }
         )
 
@@ -509,8 +509,8 @@ class PtTransformer(nn.Module):
 
         # if there are still more than one actions for one moment
         # pick the one with the shortest duration (easiest to regress)
-        lens.masked_fill_(inside_gt_seg_mask == 0, float('inf'))
-        lens.masked_fill_(inside_regress_range == 0, float('inf'))
+        lens.masked_fill_(inside_gt_seg_mask==0, float('inf'))
+        lens.masked_fill_(inside_regress_range==0, float('inf'))
         # F T x N -> F T
         min_len, min_len_inds = lens.min(dim=1)
 
@@ -534,9 +534,9 @@ class PtTransformer(nn.Module):
         return cls_targets, reg_targets
 
     def losses(
-            self, fpn_masks,
-            out_cls_logits, out_offsets,
-            gt_cls_labels, gt_offsets
+        self, fpn_masks,
+        out_cls_logits, out_offsets,
+        gt_cls_labels, gt_offsets
     ):
         # fpn_masks, out_*: F (List) [B, T_i, C]
         # gt_* : B (list) [F T, C]
@@ -555,7 +555,7 @@ class PtTransformer(nn.Module):
         # update the loss normalizer
         num_pos = pos_mask.sum().item()
         self.loss_normalizer = self.loss_normalizer_momentum * self.loss_normalizer + (
-                1 - self.loss_normalizer_momentum
+            1 - self.loss_normalizer_momentum
         ) * max(num_pos, 1)
 
         # gt_cls is already one hot encoded now, simply masking out
@@ -592,16 +592,16 @@ class PtTransformer(nn.Module):
 
         # return a dict of losses
         final_loss = cls_loss + reg_loss * loss_weight
-        return {'cls_loss': cls_loss,
-                'reg_loss': reg_loss,
-                'final_loss': final_loss}
+        return {'cls_loss'   : cls_loss,
+                'reg_loss'   : reg_loss,
+                'final_loss' : final_loss}
 
     @torch.no_grad()
     def inference(
-            self,
-            video_list,
-            points, fpn_masks,
-            out_cls_logits, out_offsets
+        self,
+        video_list,
+        points, fpn_masks,
+        out_cls_logits, out_offsets
     ):
         # video_list B (list) [dict]
         # points F (list) [T_i, 4]
@@ -618,7 +618,7 @@ class PtTransformer(nn.Module):
         # 2: inference on each single video and gather the results
         # upto this point, all results use timestamps defined on feature grids
         for idx, (vidx, fps, vlen, stride, nframes) in enumerate(
-                zip(vid_idxs, vid_fps, vid_lens, vid_ft_stride, vid_ft_nframes)
+            zip(vid_idxs, vid_fps, vid_lens, vid_ft_stride, vid_ft_nframes)
         ):
             # gather per-video outputs
             cls_logits_per_vid = [x[idx] for x in out_cls_logits]
@@ -644,23 +644,22 @@ class PtTransformer(nn.Module):
 
     @torch.no_grad()
     def inference_single_video(
-            self,
-            points,
-            fpn_masks,
-            out_cls_logits,
-            out_offsets,
+        self,
+        points,
+        fpn_masks,
+        out_cls_logits,
+        out_offsets,
     ):
         # points F (list) [T_i, 4]
         # fpn_masks, out_*: F (List) [T_i, C]
         segs_all = []
         scores_all = []
         cls_idxs_all = []
-        pts_all = []
 
         # loop over fpn levels
         for cls_i, offsets_i, pts_i, mask_i in zip(
                 out_cls_logits, out_offsets, points, fpn_masks
-        ):
+            ):
             # sigmoid normalization for output logits
             pred_prob = (cls_i.sigmoid() * mask_i.unsqueeze(-1)).flatten()
 
@@ -677,7 +676,7 @@ class PtTransformer(nn.Module):
             topk_idxs = topk_idxs[idxs[:num_topk]].clone()
 
             # fix a warning in pytorch 1.9
-            pt_idxs = torch.div(
+            pt_idxs =  torch.div(
                 topk_idxs, self.num_classes, rounding_mode='floor'
             )
             cls_idxs = torch.fmod(topk_idxs, self.num_classes)
@@ -699,16 +698,14 @@ class PtTransformer(nn.Module):
             segs_all.append(pred_segs[keep_idxs2])
             scores_all.append(pred_prob[keep_idxs2])
             cls_idxs_all.append(cls_idxs[keep_idxs2])
-            pts_all.append(pts[:, 0])
 
         # cat along the FPN levels (F N_i, C)
-        segs_all, scores_all, cls_idxs_all, pts_all = [
-            torch.cat(x) for x in [segs_all, scores_all, cls_idxs_all, pts_all]
+        segs_all, scores_all, cls_idxs_all = [
+            torch.cat(x) for x in [segs_all, scores_all, cls_idxs_all]
         ]
-        results = {'segments': segs_all,
-                   'scores': scores_all,
-                   'labels': cls_idxs_all,
-                   'points': pts_all}
+        results = {'segments' : segs_all,
+                   'scores'   : scores_all,
+                   'labels'   : cls_idxs_all}
 
         return results
 
@@ -728,23 +725,6 @@ class PtTransformer(nn.Module):
             segs = results_per_vid['segments'].detach().cpu()
             scores = results_per_vid['scores'].detach().cpu()
             labels = results_per_vid['labels'].detach().cpu()
-            # 新增的，加入了对时间的类别预测的输出
-            points = results_per_vid['points'].detach().cpu()
-            # 将points转换为时间
-            if points.shape[0] > 0:
-                points = (points * stride + 0.5 * nframes) / fps
-                # truncate all boundaries within [0, duration]
-                points[points <= 0.0] *= 0.0
-                points[points >= vlen] = points[points >= vlen] * 0.0 + vlen
-            sorted_points = points.clone()
-            sorted_labels = labels.clone()
-            sorted_scores = scores.clone()
-            _, idxs = sorted_scores.sort(descending=True)
-            sorted_scores = sorted_scores[idxs[:self.test_max_seg_num]]
-            sorted_points = sorted_points[idxs[:self.test_max_seg_num]]
-            sorted_labels = sorted_labels[idxs[:self.test_max_seg_num]]
-            points = torch.stack((sorted_points, sorted_labels, sorted_scores), -1)
-
             if self.test_nms_method != 'none':
                 # 2: batched nms (only implemented on CPU)
                 segs, scores, labels = batched_nms(
@@ -752,24 +732,23 @@ class PtTransformer(nn.Module):
                     self.test_iou_threshold,
                     self.test_min_score,
                     self.test_max_seg_num,
-                    use_soft_nms=(self.test_nms_method == 'soft'),
-                    multiclass=self.test_multiclass_nms,
-                    sigma=self.test_nms_sigma,
-                    voting_thresh=self.test_voting_thresh
+                    use_soft_nms = (self.test_nms_method == 'soft'),
+                    multiclass = self.test_multiclass_nms,
+                    sigma = self.test_nms_sigma,
+                    voting_thresh = self.test_voting_thresh
                 )
             # 3: convert from feature grids to seconds
             if segs.shape[0] > 0:
                 segs = (segs * stride + 0.5 * nframes) / fps
                 # truncate all boundaries within [0, duration]
-                segs[segs <= 0.0] *= 0.0
-                segs[segs >= vlen] = segs[segs >= vlen] * 0.0 + vlen
+                segs[segs<=0.0] *= 0.0
+                segs[segs>=vlen] = segs[segs>=vlen] * 0.0 + vlen
             # 4: repack the results
             processed_results.append(
-                {'video_id': vidx,
-                 'segments': segs,
-                 'scores': scores,
-                 'labels': labels,
-                 'points': points}
+                {'video_id' : vidx,
+                 'segments' : segs,
+                 'scores'   : scores,
+                 'labels'   : labels}
             )
 
         return processed_results
