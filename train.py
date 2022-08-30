@@ -47,6 +47,11 @@ def main(args):
             cfg['output_folder'], cfg_filename + '_' + str(args.output))
     if not os.path.exists(ckpt_folder):
         os.mkdir(ckpt_folder)
+    else:
+        # 输出目录ckpt_folder已经存在了，直接清除之前保存的模型（以免测试的时候使用重复的数据）
+        for file in os.listdir(ckpt_folder):
+            if file.endswith('.pth.tar'):
+                os.remove(fr'{ckpt_folder}/{file}')
     # tensorboard writer
     tb_writer = SummaryWriter(os.path.join(ckpt_folder, 'logs'))
 
@@ -90,8 +95,8 @@ def main(args):
         if os.path.isfile(args.resume):
             # load ckpt, reset epoch / best rmse
             checkpoint = torch.load(args.resume,
-                map_location = lambda storage, loc: storage.cuda(
-                    cfg['devices'][0]))
+                                    map_location=lambda storage, loc: storage.cuda(
+                                        cfg['devices'][0]))
             args.start_epoch = checkpoint['epoch'] + 1
             model.load_state_dict(checkpoint['state_dict'])
             model_ema.module.load_state_dict(checkpoint['state_dict_ema'])
@@ -127,20 +132,20 @@ def main(args):
             optimizer,
             scheduler,
             epoch,
-            model_ema = model_ema,
-            clip_grad_l2norm = cfg['train_cfg']['clip_grad_l2norm'],
+            model_ema=model_ema,
+            clip_grad_l2norm=cfg['train_cfg']['clip_grad_l2norm'],
             tb_writer=tb_writer,
             print_freq=args.print_freq
         )
 
         # save ckpt once in a while
         if (
-            (epoch == max_epochs - 1) or
-            (
-                (args.ckpt_freq > 0) and
-                (epoch % args.ckpt_freq == 0) and
-                (epoch > 0)
-            )
+                (epoch == max_epochs - 1) or
+                (
+                        (args.ckpt_freq > 0) and
+                        (epoch % args.ckpt_freq == 0) and
+                        (epoch > 0)
+                )
         ):
             save_states = {
                 'epoch': epoch,
@@ -162,12 +167,13 @@ def main(args):
     print("All done!")
     return
 
+
 ################################################################################
 if __name__ == '__main__':
     """Entry Point"""
     # the arg parser
     parser = argparse.ArgumentParser(
-      description='Train a point-based transformer for action localization')
+        description='Train a point-based transformer for action localization')
     parser.add_argument('config', metavar='DIR',
                         help='path to a config file')
     parser.add_argument('-p', '--print-freq', default=10, type=int,
