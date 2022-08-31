@@ -114,7 +114,8 @@ DEFAULTS = {
     # optimizer (for training)
     "opt": {
         # solver
-        "type": "AdamW",  # SGD or AdamW
+        # "type": "AdamW",  # SGD or AdamW
+        "type": "SGD",  # SGD or AdamW
         # solver params
         "momentum": 0.9,
         "weight_decay": 0.0,
