@@ -1,6 +1,6 @@
 dataset_name: thumos
-train_split: ['validation']
-val_split: ['test']
+train_split: [ 'validation' ]
+val_split: [ 'test' ]
 dataset: {
   json_file: ./data/thumos/annotations/thumos14.json,
   feat_folder: ./data/thumos/i3d_features,
@@ -12,7 +12,7 @@ dataset: {
   num_frames: 16,
   # serve as data augmentation
   trunc_thresh: 0.5,
-  crop_ratio: [0.9, 1.0],
+  crop_ratio: [ 0.9, 1.0 ],
   max_seq_len: 2304,
 }
 model: {
@@ -21,17 +21,14 @@ model: {
   n_mha_win_size: 19,
 }
 opt: {
-#  learning_rate: 0.0001,
-#  epochs: 30,
-  learning_rate: 0.0003,
-  warmup_epochs: 5,
+  learning_rate: 0.0001,
   epochs: 30,
+  warmup_epochs: 5,
   weight_decay: 0.05,
 }
 loader: {
-#  batch_size: 2,
-    batch_size: 6,
-    num_workers: 16,
+  batch_size: 2,
+  num_workers: 16,
 }
 train_cfg: {
   init_loss_norm: 100,
