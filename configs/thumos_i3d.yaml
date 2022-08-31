@@ -19,12 +19,16 @@ model: {
   fpn_type: identity,
   max_buffer_len_factor: 6.0,
   n_mha_win_size: 19,
+  backbone_type: conv
 }
 opt: {
   learning_rate: 0.0001,
-  epochs: 30,
-  warmup_epochs: 5,
+#  epochs: 30,
+#  warmup_epochs: 5,
   weight_decay: 0.05,
+  epochs: 60,
+  warmup_epochs: 10,
+  type: Adam
 }
 loader: {
   batch_size: 2,
