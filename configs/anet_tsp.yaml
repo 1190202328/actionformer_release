@@ -28,7 +28,6 @@ model: {
   fpn_dim: 256,
   head_dim: 256,
   use_abs_pe: True,
-  backbone_type: 'conv',
 }
 opt: {
   learning_rate: 0.001,
