@@ -36,8 +36,10 @@ model: {
   #  "use_rel_pe": True,
 
   #  # a tuple defines # layers in embed / stem / branch
-  #  backbone_arch: (2, 2, 1), # 相对于没有特征金字塔
-
+  #  # 相当于没有特征金字塔
+  #  backbone_arch: (2, 2, 0),
+  #  #  需要修改regression_range，否则效果可能会很差（因为只有一层还限制回归范围，有的有回归不出来）
+  #  regression_range: [ (0, 100000), ],
 }
 opt: {
   learning_rate: 0.0001,
